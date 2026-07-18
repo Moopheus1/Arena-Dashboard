@@ -69,6 +69,13 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Positions table has a TOTAL row (bold, top border) summing Invested, Alloc %,
+  and P&L across a model's open positions, plus a reconciliation line below
+  the table: current market value of positions + cash, checked against the
+  account_value the API reports (flags a mismatch if they differ by >$1).
+  Total invested (cost basis) is shown for reference but will NOT equal account
+  value or the reconciled figure — cost basis is entry-price based, the other
+  two are current-price based. Don't expect those two numbers to tie out.
 - Light/dark theme toggle (top right) is a pure front-end preference, stored in
   the visitor's own browser localStorage — no server or data.json involvement.
 - The dashboard's client-side JS re-fetches `data.json` every 5 minutes, so once the

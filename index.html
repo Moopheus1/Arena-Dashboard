@@ -103,6 +103,11 @@
   td.sym{font-weight:600;color:var(--bone);}
   td.pnl-pos{color:var(--green);}
   td.pnl-neg{color:var(--red);}
+  tfoot td{font-weight:700;color:var(--bone);border-top:2px solid var(--line);border-bottom:none;padding-top:9px;}
+  .reconcile{font-family:var(--font-mono);font-size:11px;color:var(--fog);margin-top:8px;}
+  .reconcile b{color:var(--bone);}
+  .reconcile.ok{color:var(--green);}
+  .reconcile.off{color:var(--red);}
 
   /* Recent actions feed */
   .action-feed{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow-y:auto;padding-right:4px;}
@@ -228,12 +233,16 @@ function render(data){
 
   board.innerHTML = sorted.map((m,i)=>{
     const retCls = m.total_return_pct>=0?'pos':'neg';
-    const posRows = m.open_positions
-      .slice().sort((a,b)=>b.market_value - a.market_value)
-      .map(p=>{
+    const posSorted = m.open_positions.slice().sort((a,b)=>b.market_value - a.market_value);
+    let totalInvested = 0, totalMarketValue = 0, totalAllocPct = 0, totalPnl = 0;
+    const posRows = posSorted.map(p=>{
         const pnlCls = p.unrealized_pnl>=0?'pnl-pos':'pnl-neg';
         const invested = p.quantity * p.entry_price;
         const allocPct = m.account_value ? (p.market_value / m.account_value * 100) : 0;
+        totalInvested += invested;
+        totalMarketValue += p.market_value;
+        totalAllocPct += allocPct;
+        totalPnl += p.unrealized_pnl;
         return `<tr>
           <td class="sym">${p.symbol}</td>
           <td>${p.quantity}</td>
@@ -244,6 +253,24 @@ function render(data){
           <td class="${pnlCls}">${fmtUsdSigned(p.unrealized_pnl)}</td>
         </tr>`;
       }).join('');
+    const totalPnlCls = totalPnl>=0?'pnl-pos':'pnl-neg';
+    const posFoot = `<tr>
+        <td>TOTAL</td><td></td><td></td><td></td>
+        <td>${fmtUsd(totalInvested)}</td>
+        <td>${totalAllocPct.toFixed(1)}%</td>
+        <td class="${totalPnlCls}">${fmtUsdSigned(totalPnl)}</td>
+      </tr>`;
+    // Reconciliation: positions (current market value) + cash should equal account value.
+    // Cost basis (totalInvested) will NOT match account_value — it's what was paid at
+    // entry, not today's mark-to-market, so it's shown separately for reference only.
+    const reconciled = m.account_value ? (totalMarketValue + m.cash_balance) : 0;
+    const reconcileDiff = Math.abs(reconciled - m.account_value);
+    const reconcileOk = reconcileDiff < 1; // within $1 rounding
+    const reconcileHtml = `<div class="reconcile ${reconcileOk?'ok':'off'}">
+        Positions (${fmtUsd(totalMarketValue)}) + Cash (${fmtUsd(m.cash_balance)}) = <b>${fmtUsd(reconciled)}</b>
+        ${reconcileOk ? '\u2713 matches account value' : `\u26a0 differs from stated account value (${fmtUsd(m.account_value)}) by ${fmtUsd(reconcileDiff)}`}
+        <br>Total invested at cost (${fmtUsd(totalInvested)}) will not match account value — it reflects entry prices, not current ones.
+      </div>`;
 
     const actions = (m.recent_actions || []);
     const actionCards = actions.map(act=>{
@@ -287,8 +314,10 @@ function render(data){
             <table>
               <thead><tr><th>Sym</th><th>Qty</th><th>Entry</th><th>Now</th><th>Invested</th><th>Alloc</th><th>P&L</th></tr></thead>
               <tbody>${posRows}</tbody>
+              <tfoot>${posFoot}</tfoot>
             </table>
             </div>
+            ${reconcileHtml}
             <div class="section-label spaced">Market context — top holdings</div>
             ${newsHtml}
           </div>
