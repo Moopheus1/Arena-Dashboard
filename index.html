@@ -83,7 +83,8 @@
 
   .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fog);margin-bottom:10px;}
   .section-label.spaced{margin-top:22px;}
-  table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;min-width:480px;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;}
   th{text-align:right;font-weight:500;color:var(--fog);padding:6px 8px;border-bottom:1px solid var(--line);font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
   th:first-child,td:first-child{text-align:left;}
   td{text-align:right;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.04);}
@@ -197,11 +198,15 @@ function render(data){
       .slice().sort((a,b)=>b.market_value - a.market_value)
       .map(p=>{
         const pnlCls = p.unrealized_pnl>=0?'pnl-pos':'pnl-neg';
+        const invested = p.quantity * p.entry_price;
+        const allocPct = m.account_value ? (p.market_value / m.account_value * 100) : 0;
         return `<tr>
           <td class="sym">${p.symbol}</td>
           <td>${p.quantity}</td>
           <td>$${p.entry_price.toFixed(2)}</td>
           <td>$${p.current_price.toFixed(2)}</td>
+          <td>${fmtUsd(invested)}</td>
+          <td>${allocPct.toFixed(1)}%</td>
           <td class="${pnlCls}">${fmtUsdSigned(p.unrealized_pnl)}</td>
         </tr>`;
       }).join('');
@@ -244,10 +249,12 @@ function render(data){
         <div class="detail-inner">
           <div>
             <div class="section-label">Open positions (${m.open_positions.length}) · ${fmtUsd(m.account_value)} total, ${fmtUsd(m.cash_balance)} cash</div>
+            <div class="table-scroll">
             <table>
-              <thead><tr><th>Sym</th><th>Qty</th><th>Entry</th><th>Now</th><th>P&L</th></tr></thead>
+              <thead><tr><th>Sym</th><th>Qty</th><th>Entry</th><th>Now</th><th>Invested</th><th>Alloc</th><th>P&L</th></tr></thead>
               <tbody>${posRows}</tbody>
             </table>
+            </div>
             <div class="section-label spaced">Market context — top holdings</div>
             ${newsHtml}
           </div>

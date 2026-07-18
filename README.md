@@ -66,6 +66,9 @@ README.md. Never print or log the auth token.
 
 ## Notes
 
+- The positions table shows Invested (quantity × entry price — what was actually
+  put into that position) and Alloc (current market value as a % of total account value).
+  Both are computed client-side from existing data.json fields, no schema change needed.
 - The dashboard's client-side JS re-fetches `data.json` every 5 minutes, so once the
   scheduled task pushes a new commit, the open page updates without a manual reload.
   Expanded model rows stay open across that re-fetch (tracked by model id), so you can
