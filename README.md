@@ -69,6 +69,9 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Every ticker symbol (positions table, recent-actions feed, news headlines) links
+  out to `rallies.ai/research/<ticker>` for deeper research. Links stop click
+  propagation so they don't also toggle the row open/closed.
 - Positions table has a TOTAL row (bold, top border) summing Invested, Alloc %,
   and P&L across a model's open positions, plus a reconciliation line below
   the table: current market value of positions + cash, checked against the

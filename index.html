@@ -100,7 +100,11 @@
   th{text-align:right;font-weight:500;color:var(--fog);padding:7px 9px;border-bottom:1px solid var(--line);font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
   th:first-child,td:first-child{text-align:left;}
   td{text-align:right;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,0.04);}
-  td.sym{font-weight:600;color:var(--bone);}
+  td.sym{font-weight:600;color:var(--bone);padding:0;}
+  .sym-link{color:inherit;text-decoration:none;display:inline-block;padding:7px 9px;}
+  .sym-link:hover{color:var(--amber);text-decoration:underline;}
+  .action-tag .sym-link{color:inherit;padding:0;}
+  .action-tag .sym-link:hover{text-decoration:underline;}
   td.pnl-pos{color:var(--green);}
   td.pnl-neg{color:var(--red);}
   tfoot td{font-weight:700;color:var(--bone);border-top:2px solid var(--line);border-bottom:none;padding-top:9px;}
@@ -127,7 +131,8 @@
   .news-list{display:flex;flex-direction:column;gap:8px;}
   .news-item{display:block;padding:10px 12px;background:var(--void);border-radius:6px;border:1px solid var(--line);text-decoration:none;transition:border-color .15s ease;}
   .news-item:hover{border-color:var(--amber-dim);}
-  .news-sym{display:inline-block;font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;}
+  .news-sym{display:inline-block;font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;text-decoration:none;}
+  .news-sym:hover{text-decoration:underline;}
   .news-title{font-family:var(--font-ui);font-size:13.5px;line-height:1.45;color:var(--bone);}
   .news-date{font-family:var(--font-mono);font-size:10px;color:var(--fog);margin-top:4px;}
   .news-empty{font-family:var(--font-mono);font-size:11px;color:var(--fog);}
@@ -195,6 +200,8 @@ const fmtDate = (iso) => {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
 };
+const symUrl = (sym) => `https://rallies.ai/research/${encodeURIComponent(sym)}`;
+const symLink = (sym) => sym ? `<a class="sym-link" href="${symUrl(sym)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${sym}</a>` : '';
 
 async function load(){
   const res = await fetch('data.json?t=' + Date.now());
@@ -244,7 +251,7 @@ function render(data){
         totalAllocPct += allocPct;
         totalPnl += p.unrealized_pnl;
         return `<tr>
-          <td class="sym">${p.symbol}</td>
+          <td class="sym">${symLink(p.symbol)}</td>
           <td>${p.quantity}</td>
           <td>$${p.entry_price.toFixed(2)}</td>
           <td>$${p.current_price.toFixed(2)}</td>
@@ -274,7 +281,7 @@ function render(data){
 
     const actions = (m.recent_actions || []);
     const actionCards = actions.map(act=>{
-      const symbolPart = act.symbol ? ` · ${act.quantity ? act.quantity+' sh ' : ''}${act.symbol}` : '';
+      const symbolPart = act.symbol ? ` \u00b7 ${act.quantity ? act.quantity+' sh ' : ''}${symLink(act.symbol)}` : '';
       return `<div class="action-card ${act.action}">
         <span class="action-tag ${act.action}">${act.action}${symbolPart}</span>
         <div class="action-meta">${fmtDate(act.date)}</div>
@@ -286,7 +293,7 @@ function render(data){
     const newsHtml = newsItems.length
       ? `<div class="news-list">${newsItems.map(n=>`
           <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
-            <span class="news-sym">${n.symbol}</span>
+            <a class="news-sym" href="${symUrl(n.symbol)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${n.symbol}</a>
             <div class="news-title">${n.title}</div>
             <div class="news-date">${fmtDate(n.published_at)}</div>
           </a>`).join('')}</div>`
