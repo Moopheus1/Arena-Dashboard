@@ -69,6 +69,11 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Thesis text in the recent-actions feed sometimes ends in "..." because the
+  Rallies MCP tool truncates the field at the source (observed cutoff ~400-450
+  characters) before this dashboard ever sees it — there is no full-text version
+  available to fetch. Any thesis ending in "..." gets a small italic note flagging
+  this so it doesn't read as a rendering bug.
 - Battle bars (top of page) now use magnitude-scaled green/red instead of the
   original amber accent: bigger gains render as deeper/more saturated green,
   bigger losses as deeper/more saturated red, scaled relative to that refresh's

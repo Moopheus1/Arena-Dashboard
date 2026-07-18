@@ -124,6 +124,7 @@
   .action-tag.hold{background:rgba(255,176,0,0.15);color:var(--amber);}
   .action-meta{font-family:var(--font-mono);font-size:11px;color:var(--fog);margin-bottom:6px;}
   .thesis{font-family:var(--font-ui);font-size:13.5px;line-height:1.55;color:var(--bone);opacity:.9;}
+  .thesis-cut{display:block;font-family:var(--font-mono);font-size:10.5px;font-style:italic;color:var(--fog);margin-top:6px;opacity:.85;}
 
   /* News / market context */
   .news-list{display:flex;flex-direction:column;gap:8px;}
@@ -289,10 +290,15 @@ function render(data){
     const actions = (m.recent_actions || []);
     const actionCards = actions.map(act=>{
       const symbolPart = act.symbol ? ` \u00b7 ${act.quantity ? act.quantity+' sh ' : ''}${symLink(act.symbol)}` : '';
+      const thesisText = act.thesis || '';
+      const isCut = /\.\.\.\s*$/.test(thesisText.trim());
+      const cutNote = isCut
+        ? `<span class="thesis-cut">\u26a0 Cut off at source \u2014 Rallies.ai truncates this field when it publishes the decision; not a display limit on this dashboard.</span>`
+        : '';
       return `<div class="action-card ${act.action}">
         <span class="action-tag ${act.action}">${act.action}${symbolPart}</span>
         <div class="action-meta">${fmtDate(act.date)}</div>
-        <div class="thesis">${act.thesis}</div>
+        <div class="thesis">${thesisText}${cutNote}</div>
       </div>`;
     }).join('') || `<div class="news-empty">No recent decisions on record.</div>`;
 
