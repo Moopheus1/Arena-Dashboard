@@ -69,6 +69,12 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Battle bars (top of page) now use magnitude-scaled green/red instead of the
+  original amber accent: bigger gains render as deeper/more saturated green,
+  bigger losses as deeper/more saturated red, scaled relative to that refresh's
+  biggest mover (not a fixed scale, so the "deepest" shade shifts day to day).
+  The #1-ranked model still gets a subtle white ring to mark it as leader,
+  independent of color.
 - Every ticker symbol (positions table, recent-actions feed, news headlines) links
   out to `rallies.ai/research/<ticker>` for deeper research. Links stop click
   propagation so they don't also toggle the row open/closed.
