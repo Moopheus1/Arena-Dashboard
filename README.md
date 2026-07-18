@@ -69,6 +69,8 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Light/dark theme toggle (top right) is a pure front-end preference, stored in
+  the visitor's own browser localStorage — no server or data.json involvement.
 - The dashboard's client-side JS re-fetches `data.json` every 5 minutes, so once the
   scheduled task pushes a new commit, the open page updates without a manual reload.
   Expanded model rows stay open across that re-fetch (tracked by model id), so you can
