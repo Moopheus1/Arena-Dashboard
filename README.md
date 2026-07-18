@@ -69,6 +69,11 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- BUGFIX: news items previously nested an `<a>` (ticker link) inside another `<a>`
+  (article link), which is invalid HTML. Browsers auto-close the outer link when
+  they hit the inner one, leaving an empty styled box and an unclickable headline
+  — fixed by making the card a `<div>` with two sibling links inside (ticker →
+  research page, headline → article) instead of nesting.
 - Thesis text in the recent-actions feed sometimes ends in "..." because the
   Rallies MCP tool truncates the field at the source (observed cutoff ~400-450
   characters) before this dashboard ever sees it — there is no full-text version

@@ -128,11 +128,13 @@
 
   /* News / market context */
   .news-list{display:flex;flex-direction:column;gap:8px;}
-  .news-item{display:block;padding:10px 12px;background:var(--void);border-radius:6px;border:1px solid var(--line);text-decoration:none;transition:border-color .15s ease;}
+  .news-item{display:block;padding:10px 12px;background:var(--void);border-radius:6px;border:1px solid var(--line);transition:border-color .15s ease;}
   .news-item:hover{border-color:var(--amber-dim);}
   .news-sym{display:inline-block;font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;text-decoration:none;}
   .news-sym:hover{text-decoration:underline;}
+  .news-title-link{display:block;text-decoration:none;}
   .news-title{font-family:var(--font-ui);font-size:13.5px;line-height:1.45;color:var(--bone);}
+  .news-title-link:hover .news-title{color:var(--amber);text-decoration:underline;}
   .news-date{font-family:var(--font-mono);font-size:10px;color:var(--fog);margin-top:4px;}
   .news-empty{font-family:var(--font-mono);font-size:11px;color:var(--fog);}
 
@@ -305,11 +307,13 @@ function render(data){
     const newsItems = (m.news || []);
     const newsHtml = newsItems.length
       ? `<div class="news-list">${newsItems.map(n=>`
-          <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
-            <a class="news-sym" href="${symUrl(n.symbol)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${n.symbol}</a>
-            <div class="news-title">${n.title}</div>
+          <div class="news-item">
+            <a class="news-sym" href="${symUrl(n.symbol)}" target="_blank" rel="noopener">${n.symbol}</a>
+            <a class="news-title-link" href="${n.url}" target="_blank" rel="noopener">
+              <div class="news-title">${n.title}</div>
+            </a>
             <div class="news-date">${fmtDate(n.published_at)}</div>
-          </a>`).join('')}</div>`
+          </div>`).join('')}</div>`
       : `<div class="news-empty">No recent headlines for top holdings.</div>`;
 
     const wasOpen = openIds.has(String(m.id));
