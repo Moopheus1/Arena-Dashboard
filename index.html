@@ -76,12 +76,13 @@
   .chev{color:var(--fog);transition:transform .25s ease;justify-self:end;}
   .row.open .chev{transform:rotate(180deg);}
 
-  .detail{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(--panel-2);}
-  .row.open .detail{max-height:1400px;}
+  .detail{max-height:0;overflow:hidden;transition:max-height .4s ease;background:var(--panel-2);}
+  .row.open .detail{max-height:4000px;}
   .detail-inner{padding:20px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
   @media (max-width:720px){ .detail-inner{grid-template-columns:1fr;} .row-main{grid-template-columns:32px 1fr auto auto 20px;} .stat.hide-sm{display:none;} }
 
   .section-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fog);margin-bottom:10px;}
+  .section-label.spaced{margin-top:22px;}
   table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;}
   th{text-align:right;font-weight:500;color:var(--fog);padding:6px 8px;border-bottom:1px solid var(--line);font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
   th:first-child,td:first-child{text-align:left;}
@@ -90,13 +91,28 @@
   td.pnl-pos{color:var(--green);}
   td.pnl-neg{color:var(--red);}
 
-  .action-card{background:var(--void);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:14px 16px;}
-  .action-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-bottom:10px;}
+  /* Recent actions feed */
+  .action-feed{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow-y:auto;padding-right:4px;}
+  .action-feed::-webkit-scrollbar{width:6px;}
+  .action-feed::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+  .action-card{background:var(--void);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:12px 14px;}
+  .action-card.sell{border-left-color:var(--red);}
+  .action-card.hold{border-left-color:var(--fog);}
+  .action-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-bottom:8px;}
   .action-tag.buy{background:rgba(62,207,142,0.15);color:var(--green);}
   .action-tag.sell{background:rgba(255,92,92,0.15);color:var(--red);}
   .action-tag.hold{background:rgba(255,176,0,0.15);color:var(--amber);}
-  .action-meta{font-family:var(--font-mono);font-size:11px;color:var(--fog);margin-bottom:10px;}
-  .thesis{font-family:var(--font-ui);font-size:13px;line-height:1.55;color:var(--bone);opacity:.9;}
+  .action-meta{font-family:var(--font-mono);font-size:10px;color:var(--fog);margin-bottom:6px;}
+  .thesis{font-family:var(--font-ui);font-size:12px;line-height:1.5;color:var(--bone);opacity:.9;}
+
+  /* News / market context */
+  .news-list{display:flex;flex-direction:column;gap:8px;}
+  .news-item{display:block;padding:10px 12px;background:var(--void);border-radius:6px;border:1px solid var(--line);text-decoration:none;transition:border-color .15s ease;}
+  .news-item:hover{border-color:var(--amber-dim);}
+  .news-sym{display:inline-block;font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;}
+  .news-title{font-family:var(--font-ui);font-size:12.5px;line-height:1.4;color:var(--bone);}
+  .news-date{font-family:var(--font-mono);font-size:10px;color:var(--fog);margin-top:4px;}
+  .news-empty{font-family:var(--font-mono);font-size:11px;color:var(--fog);}
 
   footer{margin-top:28px;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--fog);}
   footer a{color:var(--amber);text-decoration:none;}
@@ -126,7 +142,7 @@
   <div class="board" id="board"></div>
 
   <footer>
-    Data sourced from <a href="https://rallies.ai/arena" target="_blank" rel="noopener">rallies.ai/arena</a> · positions and decisions are paper-trading, for research reference only
+    Data sourced from <a href="https://rallies.ai/arena" target="_blank" rel="noopener">rallies.ai/arena</a> · positions and decisions are paper-trading, for research reference only. News headlines are the top holdings' most recent coverage — a proxy for market context, not a record of what the model actually read.
   </footer>
 </div>
 
@@ -170,6 +186,11 @@ function render(data){
 
   // Leaderboard
   const board = document.getElementById('board');
+  // remember which rows were open across re-renders (data refreshes every 5 min)
+  const openIds = new Set(
+    [...board.querySelectorAll('.row.open')].map(r=>r.dataset.modelId)
+  );
+
   board.innerHTML = sorted.map((m,i)=>{
     const retCls = m.total_return_pct>=0?'pos':'neg';
     const posRows = m.open_positions
@@ -185,10 +206,29 @@ function render(data){
         </tr>`;
       }).join('');
 
-    const act = m.last_action;
-    const actionSymbol = act.symbol ? ` · ${act.quantity ? act.quantity+' sh ' : ''}${act.symbol}` : '';
+    const actions = (m.recent_actions || []);
+    const actionCards = actions.map(act=>{
+      const symbolPart = act.symbol ? ` · ${act.quantity ? act.quantity+' sh ' : ''}${act.symbol}` : '';
+      return `<div class="action-card ${act.action}">
+        <span class="action-tag ${act.action}">${act.action}${symbolPart}</span>
+        <div class="action-meta">${fmtDate(act.date)}</div>
+        <div class="thesis">${act.thesis}</div>
+      </div>`;
+    }).join('') || `<div class="news-empty">No recent decisions on record.</div>`;
 
-    return `<div class="row ${i===0?'leader':''}" data-idx="${i}">
+    const newsItems = (m.news || []);
+    const newsHtml = newsItems.length
+      ? `<div class="news-list">${newsItems.map(n=>`
+          <a class="news-item" href="${n.url}" target="_blank" rel="noopener">
+            <span class="news-sym">${n.symbol}</span>
+            <div class="news-title">${n.title}</div>
+            <div class="news-date">${fmtDate(n.published_at)}</div>
+          </a>`).join('')}</div>`
+      : `<div class="news-empty">No recent headlines for top holdings.</div>`;
+
+    const wasOpen = openIds.has(String(m.id));
+
+    return `<div class="row ${i===0?'leader':''} ${wasOpen?'open':''}" data-idx="${i}" data-model-id="${m.id}">
       <div class="row-main" onclick="toggleRow(this.parentElement)">
         <div class="rank">${String(i+1).padStart(2,'0')}</div>
         <div class="name-block">
@@ -208,14 +248,12 @@ function render(data){
               <thead><tr><th>Sym</th><th>Qty</th><th>Entry</th><th>Now</th><th>P&L</th></tr></thead>
               <tbody>${posRows}</tbody>
             </table>
+            <div class="section-label spaced">Market context — top holdings</div>
+            ${newsHtml}
           </div>
           <div>
-            <div class="section-label">Last known action — ${fmtDate(act.date)}</div>
-            <div class="action-card">
-              <span class="action-tag ${act.action}">${act.action}${actionSymbol}</span>
-              <div class="action-meta">Week ${fmtPct2(m.week_return_pct)} · Month ${fmtPct2(m.month_return_pct)} · Max DD ${m.max_drawdown_pct.toFixed(1)}%</div>
-              <div class="thesis">${act.thesis}</div>
-            </div>
+            <div class="section-label">Last 5 actions · Week ${fmtPct2(m.week_return_pct)} · Month ${fmtPct2(m.month_return_pct)} · Max DD ${m.max_drawdown_pct.toFixed(1)}%</div>
+            <div class="action-feed">${actionCards}</div>
           </div>
         </div>
       </div>
@@ -224,9 +262,9 @@ function render(data){
 }
 
 function toggleRow(row){
-  const wasOpen = row.classList.contains('open');
-  document.querySelectorAll('.row.open').forEach(r=>r.classList.remove('open'));
-  if(!wasOpen) row.classList.add('open');
+  // Independent toggle — does NOT close other open rows, so you can compare
+  // multiple models' positions/actions side by side while scrolling.
+  row.classList.toggle('open');
 }
 
 load();
