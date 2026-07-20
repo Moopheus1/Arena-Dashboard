@@ -69,6 +69,12 @@ README.md. Never print or log the auth token.
 - The positions table shows Invested (quantity × entry price — what was actually
   put into that position) and Alloc (current market value as a % of total account value).
   Both are computed client-side from existing data.json fields, no schema change needed.
+- Added a "Today's activity" block below the battle bars, listing which models
+  logged a buy/sell/hold decision on the same UTC calendar day as the most recent
+  data refresh (data.as_of), with a plain-language "no activity yet today" state
+  when nothing has happened. "Today" is defined as the refresh timestamp's UTC
+  date, not the viewer's local browser date — those can disagree depending on
+  where you're viewing from, so the block says explicitly which date it means.
 - BUGFIX: news items previously nested an `<a>` (ticker link) inside another `<a>`
   (article link), which is invalid HTML. Browsers auto-close the outer link when
   they hit the inner one, leaving an empty styled box and an unclickable headline
